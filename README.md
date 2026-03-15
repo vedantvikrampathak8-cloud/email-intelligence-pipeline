@@ -258,3 +258,8 @@ email-pipeline/
 - Full body only loaded on explicit user click (/expand)
 - Prompt injection mitigation: email content wrapped in triple quotes
 - Never commit your API secret, Gmail app password, or AWS credentials
+
+## Example
+-## Interface Preview
+
+![Email Intelligence UI](ui-example.png)
