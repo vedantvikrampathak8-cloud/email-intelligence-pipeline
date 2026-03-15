@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Email Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #ffffff;
+    --bg2:       #f5f5f4;
+    --bg3:       #f0efed;
+    --text:      #1a1a1a;
+    --text2:     #6b6b6b;
+    --border:    rgba(0,0,0,0.1);
+    --border2:   rgba(0,0,0,0.2);
+    --info-bg:   #e6f1fb;
+    --info-text: #0c447c;
+    --info-border: #185fa5;
+    --success-bg: #eaf3de;
+    --success-text: #27500a;
+    --danger-bg:  #fcebeb;
+    --danger-text: #791f1f;
+    --radius:    8px;
+    --radius-lg: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #1a1a1a;
+      --bg2:       #242424;
+      --bg3:       #2e2e2e;
+      --text:      #f0efed;
+      --text2:     #9a9a9a;
+      --border:    rgba(255,255,255,0.1);
+      --border2:   rgba(255,255,255,0.2);
+      --info-bg:   #0c2d4a;
+      --info-text: #85b7eb;
+      --info-border: #185fa5;
+      --success-bg: #172d08;
+      --success-text: #c0dd97;
+      --danger-bg:  #2d0f0f;
+      --danger-text: #f09595;
+    }
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .dash {
+    width: 100%;
+    max-width: 820px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 12px; }
+
+  .logo {
+    width: 40px; height: 40px;
+    background: var(--info-bg);
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .title { font-size: 18px; font-weight: 600; color: var(--text); }
+
+  .subtitle {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+
+  .config-btn {
+    font-size: 12px;
+    padding: 7px 14px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s;
+  }
+
+  .config-btn:hover { background: var(--bg2); }
+
+  .config-panel {
+    background: var(--bg2);
+    border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: none;
+  }
+
+  .config-panel.open { display: block; }
+
+  .config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .config-label {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 5px;
+  }
+
+  .config-input {
+    width: 100%;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 10px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+
+  .config-input:focus { border-color: var(--info-border); }
+
+  .save-btn {
+    font-size: 13px;
+    padding: 7px 18px;
+    border: 0.5px solid var(--info-border);
+    border-radius: var(--radius);
+    background: var(--info-bg);
+    color: var(--info-text);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+  }
+
+  .quick-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 600px) {
+    .quick-grid { grid-template-columns: repeat(3, 1fr); }
+    .config-grid { grid-template-columns: 1fr; }
+  }
+
+  .quick-btn {
+    padding: 10px 8px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--text2);
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .quick-btn:hover {
+    background: var(--bg2);
+    color: var(--text);
+    border-color: var(--border2);
+  }
+
+  .quick-btn .qicon { font-size: 16px; display: block; margin-bottom: 4px; }
+
+  .chat-container {
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .chat-messages {
+    min-height: 360px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding: 1.25rem;
+  }
+
+  .msg { margin-bottom: 1.25rem; animation: fadein 0.2s ease; }
+
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-label {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text2);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .msg-bubble {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text);
+    background: var(--bg2);
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    max-width: 90%;
+    word-break: break-word;
+  }
+
+  .msg.user .msg-bubble {
+    background: var(--info-bg);
+    color: var(--info-text);
+    margin-left: auto;
+  }
+
+  .msg.user .msg-label { text-align: right; }
+
+  .typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg2);
+    border-radius: var(--radius);
+    width: fit-content;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text2);
+    animation: bounce 1.2s infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40%           { transform: translateY(-5px); opacity: 1; }
+  }
+
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    border-top: 0.5px solid var(--border);
+    background: var(--bg2);
+  }
+
+  .chat-input {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 9px 14px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+
+  .chat-input:focus { border-color: var(--info-border); }
+
+  .send-btn {
+    padding: 9px 20px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--info-border);
+    background: var(--info-bg);
+    color: var(--info-text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text2);
+    font-size: 13px;
+    gap: 8px;
+  }
+
+  .empty-icon { font-size: 32px; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text2);
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text2);
+    flex-shrink: 0;
+  }
+
+  .status-dot.connected { background: #3B6D11; }
+  .status-dot.error     { background: #A32D2D; }
+
+  .email-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+  .email-card {
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    background: var(--bg);
+    border-left: 3px solid var(--border);
+  }
+
+  .email-card.important    { border-left-color: #185fa5; }
+  .email-card.sub-important { border-left-color: #3B6D11; }
+  .email-card.advertisement { border-left-color: #BA7517; }
+  .email-card.phishing     { border-left-color: #A32D2D; }
+
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; gap: 8px; }
+  .card-subject { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; font-weight: 500; white-space: nowrap; }
+  .badge-important     { background: #e6f1fb; color: #0c447c; }
+  .badge-sub-important { background: #eaf3de; color: #27500a; }
+  .badge-advertisement { background: #faeeda; color: #633806; }
+  .badge-phishing      { background: #fcebeb; color: #791f1f; }
+  .card-meta { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .card-snippet { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .card-body { font-size: 12px; color: var(--text); line-height: 1.6; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--border); white-space: pre-wrap; word-break: break-word; }
+  .urgent-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: #fcebeb; color: #791f1f; font-weight: 500; border: 0.5px solid #f09595; }
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+</head>
+<body>
+<div class="dash">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">📬</div>
+      <div>
+        <div class="title">Email Intelligence</div>
+        <div class="subtitle">rag · bedrock · dynamodb · nova-micro</div>
+      </div>
+    </div>
+    <button class="config-btn" onclick="toggleConfig()">⚙ configure</button>
+  </div>
+
+  <div class="config-panel" id="configPanel">
+    <div class="config-grid">
+      <div>
+        <div class="config-label">api gateway url</div>
+        <input class="config-input" id="apiUrl" placeholder="https://xxx.execute-api.us-east-1.amazonaws.com" />
+      </div>
+      <div>
+        <div class="config-label">api secret</div>
+        <input class="config-input" id="apiSecret" type="password" placeholder="your-api-secret" />
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveConfig()">Save & Connect</button>
+  </div>
+
+  <div class="quick-grid">
+    <button class="quick-btn" onclick="quickAsk('What important emails did I receive today?')">
+      <span class="qicon">⭐</span>important
+    </button>
+    <button class="quick-btn" onclick="quickAsk('Show me all phishing emails I received.')">
+      <span class="qicon">🎣</span>phishing
+    </button>
+    <button class="quick-btn" onclick="quickAsk('What advertisement emails did I receive?')">
+      <span class="qicon">📢</span>ads
+    </button>
+    <button class="quick-btn" onclick="quickAsk('Summarize all emails I received recently.')">
+      <span class="qicon">📋</span>summary
+    </button>
+    <button class="quick-btn" onclick="quickAsk('Any urgent emails I need to action on?')">
+      <span class="qicon">⚡</span>urgent
+    </button>
+  </div>
+
+  <div class="chat-container">
+    <div class="chat-messages" id="chatMessages">
+      <div class="empty-state" id="emptyState">
+        <span class="empty-icon">📭</span>
+        <span>Ask anything about your inbox</span>
+        <span style="font-size:11px; font-family: 'JetBrains Mono', monospace; margin-top: 4px;">click ⚙ configure → enter API details → ask away</span>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input
+        class="chat-input"
+        id="chatInput"
+        placeholder="e.g. what phishing emails did I get this week?"
+        onkeydown="if(event.key==='Enter' && !event.shiftKey) sendMessage()"
+      />
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">not configured — click ⚙ to set your API details</span>
+  </div>
+
+</div>
+
+<script>
+  let API_URL = localStorage.getItem('email_api_url') || '';
+  let API_SECRET = localStorage.getItem('email_api_secret') || '';
+  let isLoading = false;
+  let lastQuery  = '';
+  let lastEmail  = null;
+  let lastQueryTs = null;
+  let sessionId = localStorage.getItem('email_session_id');
+  if (!sessionId) {
+    sessionId = 'sess_' + Math.random().toString(36).substr(2, 12) + '_' + Date.now();
+    localStorage.setItem('email_session_id', sessionId);
+  }
+
+  if (API_URL && API_SECRET) {
+    document.getElementById('apiUrl').value = API_URL;
+    document.getElementById('apiSecret').value = API_SECRET;
+    setStatus('connected', 'connected · ' + API_URL.split('/')[2]);
+  }
+
+  function setStatus(state, text) {
+    document.getElementById('statusDot').className = 'status-dot ' + state;
+    document.getElementById('statusText').textContent = text;
+  }
+
+  function toggleConfig() {
+    document.getElementById('configPanel').classList.toggle('open');
+  }
+
+  function saveConfig() {
+    API_URL    = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+    API_SECRET = document.getElementById('apiSecret').value.trim();
+    if (!API_URL || !API_SECRET) return;
+    localStorage.setItem('email_api_url', API_URL);
+    localStorage.setItem('email_api_secret', API_SECRET);
+    setStatus('connected', 'connected · ' + API_URL.split('/')[2]);
+    document.getElementById('configPanel').classList.remove('open');
+  }
+
+  function quickAsk(q) {
+    document.getElementById('chatInput').value = q;
+    sendMessage();
+  }
+
+  function addMessage(role, text, emails) {
+    const container = document.getElementById('chatMessages');
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    const isUser = role === 'user';
+
+    let html = `<div class="msg-label">${isUser ? 'you' : 'assistant'}</div>`;
+
+    if (isUser) {
+      html += `<div class="msg-bubble">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+    } else {
+      if (text) {
+        html += `<div class="msg-bubble" style="margin-bottom: 8px;">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+      }
+      if (emails && emails.length > 0) {
+        const badgeClass = c => 'badge-' + c.toLowerCase().replace(' ', '-');
+        const cardClass  = c => 'email-card ' + c.toLowerCase().replace(' ', '-');
+        const label      = c => c.charAt(0).toUpperCase() + c.slice(1);
+        html += '<div class="email-cards">';
+        for (const em of emails) {
+          const cls      = (em.classification || 'sub-important').toLowerCase().replace(' ', '-');
+          const esc      = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          const cardId   = 'card_' + Math.random().toString(36).substr(2,8);
+          const s3Key    = esc(em.s3_key || '');
+          const emailId  = esc(em.email_id || '');
+          const urgentBadge = em.urgent ? '<span class="urgent-badge">⚡ Urgent</span>' : '';
+          html += `
+            <div class="${cardClass(cls)}" id="${cardId}"
+                 data-s3-key="${s3Key}" data-email-id="${emailId}"
+                 onclick="toggleCard(this)" style="cursor:pointer;">
+              <div class="card-header">
+                <span class="card-subject">${esc(em.subject||'No subject')}</span>
+                <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+                  ${urgentBadge}
+                  <span class="card-badge ${badgeClass(cls)}">${label(em.classification||'sub-important')}</span>
+                  <span style="font-size:10px;color:var(--text2);">▼</span>
+                </div>
+              </div>
+              <div class="card-meta">From: ${esc(em.from||'Unknown')} &nbsp;·&nbsp; ${em.date||''}</div>
+              <div class="card-snippet">${esc(em.snippet||'')}</div>
+              <div class="card-body" style="display:none;font-size:12px;line-height:1.6;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);white-space:pre-wrap;word-break:break-word;">${em.body ? esc(em.body) : '<span style="color:var(--text2);font-size:11px;">click to load full email</span>'}</div>
+            </div>`;
+        }
+        html += '</div>';
+      }
+    }
+
+    div.innerHTML = html;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function showTyping() {
+    const container = document.getElementById('chatMessages');
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+    const div = document.createElement('div');
+    div.className = 'msg assistant';
+    div.id = 'typingIndicator';
+    div.innerHTML = `
+      <div class="msg-label">assistant</div>
+      <div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typingIndicator');
+    if (t) t.remove();
+  }
+
+  async function toggleCard(cardEl) {
+    const bodyDiv = cardEl.querySelector('.card-body');
+    const s3Key   = cardEl.dataset.s3Key || '';
+    const isOpen  = cardEl.classList.contains('expanded');
+
+    if (isOpen) {
+      cardEl.classList.remove('expanded');
+      if (bodyDiv) bodyDiv.style.display = 'none';
+      return;
+    }
+
+    cardEl.classList.add('expanded');
+    if (!bodyDiv) return;
+
+    // Already loaded
+    if (bodyDiv.dataset.loaded === '1') {
+      bodyDiv.style.display = 'block';
+      return;
+    }
+
+    // Has body inline (from detail query)
+    if (bodyDiv.textContent && !bodyDiv.querySelector('span')) {
+      bodyDiv.style.display = 'block';
+      bodyDiv.dataset.loaded = '1';
+      return;
+    }
+
+    // Fetch from API
+    if (!s3Key || !API_URL || !API_SECRET) {
+      bodyDiv.innerHTML = '<span style="color:var(--text2);">Body unavailable — configure API first.</span>';
+      bodyDiv.style.display = 'block';
+      return;
+    }
+
+    bodyDiv.innerHTML = '<span style="color:var(--text2);font-size:11px;">Loading...</span>';
+    bodyDiv.style.display = 'block';
+
+    try {
+      const res  = await fetch(API_URL + '/expand', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-secret': API_SECRET },
+        body:    JSON.stringify({ s3_key: s3Key })
+      });
+      const data = await res.json();
+      // /expand returns {body: "email text"} — data.body is plain text, not JSON
+      const text = data.body || '(No body content available.)';
+      bodyDiv.textContent    = text;
+      bodyDiv.dataset.loaded = '1';
+    } catch (err) {
+      bodyDiv.textContent = 'Failed to load: ' + err.message;
+    }
+  }
+
+  async function sendMessage() {
+    if (isLoading) return;
+    const input = document.getElementById('chatInput');
+    const query = input.value.trim();
+    if (!query) return;
+
+    if (!API_URL || !API_SECRET) {
+      document.getElementById('configPanel').classList.add('open');
+      setStatus('error', 'configure your API first');
+      return;
+    }
+
+    input.value = '';
+    lastQuery = query;
+    isLoading = true;
+    document.getElementById('sendBtn').disabled = true;
+    addMessage('user', query);
+    showTyping();
+
+    try {
+      const res = await fetch(API_URL + '/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-secret': API_SECRET
+        },
+        body: JSON.stringify({ query, previous_query: lastQuery, session_id: sessionId, last_email: lastEmail, last_query_ts: lastQueryTs })
+      });
+
+      const data = await res.json();
+      removeTyping();
+
+      if (res.status === 401) {
+        addMessage('assistant', 'Unauthorized — check your API secret.');
+        setStatus('error', 'auth failed — wrong secret');
+      } else {
+        // Normalize — Lambda may wrap in body string or return directly
+        // Normalize response — handle both direct and wrapped formats
+        let payload;
+        try {
+          payload = (typeof data.body === 'string') ? JSON.parse(data.body) : data;
+        } catch(e) {
+          payload = data;
+        }
+
+        // If answer looks like raw JSON — Nova failed, use empty string
+        let answer = payload.answer || '';
+        if (answer.trim().startsWith('{') || answer.trim().startsWith('[')) {
+          // Try to extract summary from it
+          try {
+            const inner = JSON.parse(answer);
+            answer = inner.summary || '';
+          } catch(e) {
+            answer = 'Here are your emails:';
+          }
+        }
+
+        const emails   = payload.emails  || [];
+        const matched  = payload.matched || 0;
+        const queryTs  = payload.query_ts || null;
+
+        // Sort emails: latest first, then by classification priority
+        const classPriority = { important: 0, phishing: 1, 'sub-important': 2, advertisement: 3 };
+        emails.sort((a, b) => {
+          const dateA = new Date(a.date || 0);
+          const dateB = new Date(b.date || 0);
+          const dayDiff = Math.floor((Date.now() - dateA) / 86400000) - Math.floor((Date.now() - dateB) / 86400000);
+          if (Math.abs(dayDiff) <= 1) {
+            // Same-day or adjacent: sort by classification priority
+            return (classPriority[a.classification] || 9) - (classPriority[b.classification] || 9);
+          }
+          return dateB - dateA; // Different days: latest first
+        });
+
+        addMessage('assistant', answer, emails);
+        if (emails.length > 0)  lastEmail   = emails[0];
+        if (queryTs)            lastQueryTs = queryTs;
+        setStatus('connected', `last query · matched ${matched} emails · ${new Date().toLocaleTimeString()}`);
+      }
+    } catch (err) {
+      removeTyping();
+      addMessage('assistant', 'Connection failed — check your API URL and CORS settings on API Gateway.\n\nError: ' + err.message);
+      setStatus('error', 'connection error');
+    }
+
+    isLoading = false;
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('chatInput').focus();
+  }
+</script>
+</body>
+</html>
